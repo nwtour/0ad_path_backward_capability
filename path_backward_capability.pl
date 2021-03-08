@@ -12,7 +12,7 @@ use English qw($EFFECTIVE_USER_ID);
 use File::Slurp qw(read_file write_file);
 use Data::Dumper;
 
-my ($commit, @recheck, %generate_json);
+my ($commit, $date, @recheck);
 
 my $file_extentions = qr/(\.xml|\.json|\.png|\.dae|\.dds)$/;
 
@@ -26,6 +26,7 @@ my $version = 25;
 # Tested in UNIX environment
 my $mod_root = "/home/" . getpwuid($EFFECTIVE_USER_ID) . "/.local/share/0ad/mods/path_backward_capability$version";
 
+make_path($mod_root) if ! -d $mod_root;
 
 write_file(catfile($mod_root, 'mod.json'), qq/
 {
@@ -39,14 +40,18 @@ write_file(catfile($mod_root, 'mod.json'), qq/
 
 # Generate knowledge databases renamed files
 my $json_list_file = 'path_backward_capability_list.json';
+my $generate_json = [];
+eval { $generate_json = from_json(read_file(catfile($mod_root, $json_list_file))); };
 
-eval { %generate_json = from_json(read_file(catfile($mod_root, $json_list_file))); };
+# Github limit ~50Mb
+my $num_of_commit = 3500;
 
-open(my $pipe, "git whatchanged -n 5000 |") or die "Git pipe failed: $!\n";
+open(my $pipe, "git whatchanged -n $num_of_commit |") or die "Git pipe failed: $!\n";
 
 while(<$pipe>){
 
 	$commit = $1 if /^commit\s([a-f0-9]{40})/;
+	$date   = $1 if /^Date:\s+(.+)/;
 	next if !/^:/;
 	my @commit_info = split(/\s+/,$_);
 	next if $commit_info[4] !~ /^R/;
@@ -64,14 +69,21 @@ while(<$pipe>){
 		next;
 	}
 
-	my $name_in_mod_tree = catfile($mod_root, $old);
+	my $short = $old;
+	$short =~ s/binaries\/data\/mods\/public\///;
 
-	$name_in_mod_tree =~ s/binaries\/data\/mods\/public\///;
+	# Skip maps and gui files
+	next if $short =~ /^(maps|gui)/;
 
+	my $name_in_mod_tree = catfile($mod_root, $short);
+
+	# Restarting will complete work
 	next if -e $name_in_mod_tree;
 
-	$generate_json{$old} = [$filename, "https://github.com/0ad/0ad/commit/$commit"];
-	write_file(catfile($mod_root, $json_list_file), to_json(\%generate_json, {utf8 => 1, pretty => 1}));
+	push @{$generate_json}, [$old, $filename, "https://github.com/0ad/0ad/commit/$commit", $date];
+	# Sort knowledgebase
+	@{$generate_json} = sort { $a->[0] cmp $b->[0] } @{$generate_json};
+	write_file(catfile($mod_root, $json_list_file), to_json($generate_json, {utf8 => 1, pretty => 1}));
 
 	print join('', "OK ", $filename, " => ", $name_in_mod_tree, "\n");
 	make_path(dirname($name_in_mod_tree), {verbose => 1});
@@ -79,3 +91,6 @@ while(<$pipe>){
 }
 close($pipe);
 
+make_path(catfile($mod_root, 'maps', 'skirmishes'));
+
+#TODO @recheck
