@@ -42,7 +42,7 @@ my $json_list_file = 'path_backward_capability_list.json';
 
 eval { %generate_json = from_json(read_file(catfile($mod_root, $json_list_file))); };
 
-open(my $pipe, "git whatchanged |") or die "Git pipe failed: $!\n";
+open(my $pipe, "git whatchanged -n 5000 |") or die "Git pipe failed: $!\n";
 
 while(<$pipe>){
 
@@ -61,6 +61,7 @@ while(<$pipe>){
 	}
 	elsif(! -e $filename){
 		push @recheck, $filename;
+		next;
 	}
 
 	my $name_in_mod_tree = catfile($mod_root, $old);
