@@ -1,18 +1,24 @@
 # mod path_backward_capability
 mod for game 0 A.D.
 
-Contain game files renamed in master trunk
+mod that provides backward compatibility for map objects.
 
-Unpack ***path_backward_capability24.zip*** to ***~/.local/share/0ad/mods/CAPABILITY*** (Release version)
+How it works:
+In the history of the repository, we find all the renamed files (xml,json,png,dae,dds) and copy them to a mod directory with the current contents but the old name.
+Old maps should display objects instead of errors in the console.
+
+Create directory ```~/.local/share/0ad/mods/MODNAME``` (Unix)
 
 or
 
-Unpack ***path_backward_capability25.zip*** to ***~/.local/share/0ad/mods/CAPABILITY*** (Developer version)
+```C:\Users\{USERNAME}\Documents\My Games\0ad\mods\MODNAME``` (Windows)
 
-Copy your map to ***~/.local/share/0ad/mods/CAPABILITY/maps/skirmishes***
+Unpack ```path_backward_capability24.zip``` (Release version) or ```path_backward_capability25.zip``` (Developer version) into directory.
+
+Copy your map to ```~/.local/share/0ad/mods/MODNAME/maps/skirmishes``` (```C:\Users\{USERNAME}\Documents\My Games\0ad\mods\MODNAME\maps\skirmishes```)
 
 Enable mod in game.
 
-(screenshot.png)
+(/screenshot.png)
 
 License for re-distribution: https://github.com/0ad/0ad/blob/master/LICENSE.txt
