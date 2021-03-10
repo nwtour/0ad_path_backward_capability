@@ -4,29 +4,20 @@ use strict;
 
 use File::Basename qw(dirname);
 use File::Spec::Functions qw(catfile);
-use File::Path qw(make_path);
-use File::Copy qw(copy);
 use File::Temp qw(tmpnam);
 
 use JSON qw(to_json);
-use English qw($EFFECTIVE_USER_ID $PROGRAM_NAME);
 use File::Slurp qw(write_file);
-use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use Archive::Zip qw(:ERROR_CODES :CONSTANTS);
 use FindBin qw($Bin);
 
-print "$PROGRAM_NAME\n";
-
-my ($gitdir,$commit, $date, @recheck);
+my ($gitdir, $commit, $date, @recheck);
 
 my $file_extentions = qr/(\.xml|\.png|\.dae|\.dds)$/;
 
 # Make mod for developer version of 0ad
 # git clone https://github.com/0ad/0ad.git
-# cd 0ad
-# perl path_backward_capability.pl
-# For version 24, change $version and run git checkout 3815c082925df90726f0207edd53497407ebff99
 my $version = 25;
 
 GetOptions("version=i" => \$version, "gitdir=s" => \$gitdir);
@@ -39,6 +30,8 @@ if(! -d $gitdir) {
 }
 
 chdir($gitdir);
+
+system("git checkout 3815c082925df90726f0207edd53497407ebff99") if $version eq '24';
 
 my $zip = Archive::Zip->new();
 
