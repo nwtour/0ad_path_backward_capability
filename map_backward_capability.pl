@@ -101,7 +101,7 @@ $zip->addFile(catfile($Bin, $version, $json_list_file), $json_list_file);
 
 $zip->addDirectory('maps/skirmishes');
 
-$zip->writeToFileNamed(catfile($Bin, $version, 'map_backward_capability25.zip'));
+$zip->writeToFileNamed(catfile($Bin, $version, 'map_backward_capability' . $version . '.zip'));
 
 unlink $current_tmp_file;
 
