@@ -18,20 +18,21 @@ my $file_extentions = qr/(\.xml|\.png|\.dae|\.dds)$/;
 
 # Make mod for developer version of 0ad
 # git clone https://github.com/0ad/0ad.git
-my $version = 25;
+my $version = 26;
 
 GetOptions("version=i" => \$version, "gitdir=s" => \$gitdir);
 
 my $current_tmp_file = tmpnam();
 
 if(! -d $gitdir) {
-	print "Usage: perl map_backward_capability.pl --version=[24|25] --gitdir=[0ad repo]\n";
+	print "Usage: perl map_backward_capability.pl --version=[24|25|26] --gitdir=[0ad repo]\n";
 	exit;
 }
 
 chdir($gitdir);
 
 system("git checkout 3815c082925df90726f0207edd53497407ebff99") if $version eq '24';
+system("git checkout b924e0e052abf26523903921b860b2c277c1d17e") if $version eq '25';
 
 my $zip = Archive::Zip->new();
 
@@ -51,8 +52,10 @@ $zip->addFile($current_tmp_file, 'mod.json');
 my $json_list_file = 'map_backward_capability_list.json';
 my $generate_json = [];
 
+my $num_of_commit = 1100;
+
 # Github limit ~50Mb
-my $num_of_commit = 3500;
+$num_of_commit = 3500 if $version eq '24';
 
 open(my $pipe, "git whatchanged -n $num_of_commit |") or die "Git pipe failed: $!\n";
 

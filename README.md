@@ -7,7 +7,7 @@ How it works:
 In the history of the repository, we find all the renamed files (xml,png,dae,dds) and copy them to a mod directory with the current contents but the old name.
 Old maps should display objects instead of errors in the console.
 
-Copy ```map_backward_capability24.zip``` (Release version) or ```map_backward_capability25.zip``` (Developer version)
+Copy ```map_backward_capability25.zip``` (Release version) or ```map_backward_capability26.zip``` (Developer version)
 into directory
 ```~/.local/share/0ad/mods/map_backward_capability``` (Unix) or ```C:\Users\{USERNAME}\Documents\My Games\0ad\mods\map_backward_capability``` (Windows)
 
