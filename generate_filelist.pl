@@ -2,38 +2,31 @@
 
 use strict;
 
-use File::Basename qw(dirname);
 use File::Spec::Functions qw(catfile);
-use File::Temp qw(tmpnam);
 
-use JSON qw(to_json);
 use File::Slurp qw(write_file);
 use Getopt::Long qw(GetOptions);
 use FindBin qw($Bin);
 
-my $gitdir;
+my $output_list_file = 'list.txt';
+my ($gitdir, @generate_output);
 
 GetOptions ("gitdir=s" => \$gitdir);
 
 if (! -d $gitdir) {
-	print "Usage: generate_json.pl --gitdir=[0ad repo]\n";
+	print "Usage: generate_filelist.pl --gitdir=[0ad repo]\n";
 	exit;
 }
 
 chdir ($gitdir);
 
-my $json_list_file = 'list.json';
-my $generate_json = [];
-
-open (my $pipe, "git whatchanged -n 10000 |") or die "Git pipe failed: $!\n";
+open (my $pipe, "git whatchanged -n 20000 |") or die "Git pipe failed: $!\n";
 
 while (<$pipe>){
 
-	#$commit = $1 if /^commit\s([a-f0-9]{40})/;
-	#$date   = $1 if /^Date:\s+(.+)/;
 	next if !/^:/;
 	my @commit_info = split (/\s+/,$_);
-	next if $commit_info[4] !~ /^R/;
+	next if $commit_info[4] !~ /^R/; #only rename
 
 	my ($old, $filename) = ($commit_info[5], $commit_info[6]);
 	next if $filename !~ /\.xml$/;
@@ -57,12 +50,12 @@ while (<$pipe>){
 
 	$filename =~ s!^binaries/data/mods/public/!!;	$filename =~ s!\.xml$!!;
 	$old =~ s!^binaries/data/mods/public/!!;	$old =~ s!\.xml$!!;
-	push @{$generate_json}, [$old, $filename];
+	push @generate_output, join (":", $old, $filename);
 	# Sort knowledgebase
-	@{$generate_json} = sort { $a->[0] cmp $b->[0] } @{$generate_json};
-	write_file (catfile ($Bin, $json_list_file), to_json ($generate_json, {utf8 => 1, pretty => 1}));
+	@generate_output = sort { $a cmp $b } @generate_output;
+	write_file (catfile ($Bin, $output_list_file), join ("\n", @generate_output));
 
-	print join('', "OK ", $filename, " => ", $old, "\n");
+	print join ('', "OK ", $filename, " => ", $old, "\n");
 }
 close ($pipe);
 
