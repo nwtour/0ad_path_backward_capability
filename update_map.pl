@@ -2,7 +2,7 @@ use strict;
 use File::Copy qw(move);
 
 unless ($ARGV[0]) {
-	print "Usage: script.pl <PATH_TO_MAP_XML_FILE>\n";
+	print "Usage: update_map.pl <PATH_TO_MAP_XML_FILE>\n";
 	exit;
 }
 
@@ -15,29 +15,32 @@ if (-f $backup) {
 
 move ($ARGV[0], $backup) or die "Move to $backup failed: $!";
 
-my ($input, $output);
+my ($input, $output, @data);
 
 open ($input,  "<", $backup) or die "Can't open $backup: $!";
 open ($output, ">", $ARGV[0]) or die "Can't $ARGV[0]: $!";
 
-my @data;
 push @data, $_ while (<DATA>);
+
+sub trim {
+	my $string = shift;
+	$string =~ s!^simulation/templates/!!;
+	$string =~ s!\n$!!;
+	return $string;
+}
 
 sub change {
 	my $template = shift;
 	foreach my $s (@data) {
 		my ($old, $new) = split (":", $s);
-		$old =~ s!^simulation/templates/!!;
-		$new =~ s!^simulation/templates/!!;
-		$new =~ s!\n$!!;
-		return $new if $old eq $template;
+		return trim ($new) if trim ($old) eq $template;
 	}
 	return "";
 }
 
 while (my $str = <$input>) {
 	if ($str =~ /<Template>(.+)<\/Template>/) {
-		if (my $change = change($1)) {
+		if (my $change = change ($1)) {
 			print "Changed to $change\n";
 			$str =~ s/(.+)Template>(.+)<\/Template(.+)/$1Template>$change<\/Template$3/;
 		}
