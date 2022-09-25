@@ -20,12 +20,21 @@ if (! -d $gitdir) {
 
 chdir ($gitdir);
 
-open (my $pipe, "git whatchanged -n 20000 |") or die "Git pipe failed: $!\n";
+open (my $pipe, "git whatchanged |") or die "Git pipe failed: $!\n";
+
+my %file_list;
+
+sub remove_prefix {
+    my $string = shift;
+    $string =~ s!^binaries/data/mods/public/!!;
+    $string =~ s!\.xml$!!;
+    return $string;
+}
 
 while (<$pipe>){
 
 	next if !/^:/;
-	my @commit_info = split (/\s+/,$_);
+	my @commit_info = split (/\s+/, $_);
 	next if $commit_info[4] !~ /^R/; #only rename
 
 	my ($old, $filename) = ($commit_info[5], $commit_info[6]);
@@ -33,29 +42,38 @@ while (<$pipe>){
 	next if $filename !~ /^binaries\/data\/mods\/public\//;
 
 	if (-e $old) {
-		print "Err old file $old exists\n";
-		next;
-	}
-	elsif (! -e $filename){
+		print "Old file $old exists in repo. Skip rename.\n";
 		next;
 	}
 
-	my $short = $old;
-	$short =~ s!binaries/data/mods/public/!!;
-
+	$old = remove_prefix($old);
 	# Skip maps and gui files
-	next if $short =~ /^(maps|gui)/;
+	next if $old =~ /^(maps|gui)/;
 
-	my $name_in_mod_tree = $short;
+	if (! -e $filename) {
 
-	$filename =~ s!^binaries/data/mods/public/!!;	$filename =~ s!\.xml$!!;
-	$old =~ s!^binaries/data/mods/public/!!;	$old =~ s!\.xml$!!;
-	push @generate_output, join (":", $old, $filename);
-	# Sort knowledgebase
-	@generate_output = sort { $a cmp $b } @generate_output;
-	write_file (catfile ($Bin, $output_list_file), join ("\n", @generate_output));
+		$filename = remove_prefix($filename);
 
-	print join ('', "OK ", $filename, " => ", $old, "\n");
+		if (exists $file_list{ $filename }) {
+
+			print "Double renamed file $filename. Use new destination " . $file_list{ $filename } . "\n";
+			$file_list{ $old } = $file_list{ $filename };
+		}
+		else {
+                	print "New file $filename not exists in repo. Object will continue to be inaccessible in the latest release.\n";
+		}
+		next;
+	}
+
+	$filename = remove_prefix($filename);
+
+        $file_list{ $old } = $filename;
+
+	print join ('', "OK ", $old, " => ", $filename, "\n");
 }
 close ($pipe);
 
+# Sort knowledgebase
+@generate_output = sort { $a cmp $b } map { join (":", $_, $file_list{$_}) } (keys %file_list);
+
+write_file (catfile ($Bin, $output_list_file), join ("\n", @generate_output));
